@@ -32,14 +32,7 @@
       <div id="Settings" class="tabcontent">
         <h2>Available Medicines</h2>
         <div id="available-medicines"></div>
-        <div id="add-medicine-form">
-          <h2>Add Medicine</h2>
-          <label for="new-medicine">Medicine:</label>
-          <input type="text" id="new-medicine" name="new-medicine"><br><br>
-          <label for="new-dose">Dose:</label>
-          <input type="number" id="new-dose" name="new-dose"><br><br>
-          <input type="submit" value="Add" onclick="addMedicine()">
-      </div>
+        <button onclick="saveMedicines()">Save medicines</button>
       <div id="About" class="tabcontent">
         <h2>About</h2>
         <p>Medicine Logger is a simple web app that helps you keep track of your medication.</p>

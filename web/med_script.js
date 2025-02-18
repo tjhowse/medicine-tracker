@@ -8,9 +8,9 @@ const availableMedicines = document.getElementById('available-medicines');
 // Populate a table into this div
 const medicinesTable = document.createElement('table');
 const medicinesHeaderRow = document.createElement('tr');
-medicinesHeaderRow.innerHTML = '<th>Type</th><th>Dose</th>';
+medicinesHeaderRow.innerHTML = '<th>ID</th><th>Type</th><th>Dose (mg)</th>';
 medicinesTable.appendChild(medicinesHeaderRow);
-populateMedicinesTable();
+updateMedicinesTable();
 availableMedicines.appendChild(medicinesTable);
 
 populateSettings();
@@ -60,11 +60,7 @@ function addMedicineLogRow(table, time, count, medicine_id, note) {
   table.appendChild(row);
 }
 
-function populateMedicinesTable() {
-  // Clear the table
-  while (medicinesTable.rows.length > 1) {
-    medicinesTable.deleteRow(1);
-  }
+function updateMedicinesTable() {
 
   fetch('/api/v1/api/v1/medicines', {
     headers: {
@@ -73,13 +69,54 @@ function populateMedicinesTable() {
   })
   .then(response => response.json())
   .then(data => {
-    addMedicinesRow(medicinesTable, detail.name, detail.dose);
+    populateMedicinesTable(data);
+  }).catch(error => {
+    console.error(error);
+  });
+}
 
-    data.forEach(detail => {
-    });
+function populateMedicinesTable(data) {
+  // Clear the table
+  while (medicinesTable.rows.length > 1) {
+    medicinesTable.deleteRow(1);
+  }
 
-    // medicinesTable.rows[medicinesTable.rows.length-1].cells[1].getElementsByTagName('input')[0].focus();
+  max_id = 0;
+  data.forEach(detail => {
+    addMedicinesRow(medicinesTable, detail.medicine_id, detail.name, detail.dose);
+    if (detail.medicine_id > max_id) {
+      max_id = detail.medicine_id;
+    }
+  });
+  addMedicinesRow(medicinesTable, max_id + 1, "", "");
+  medicinesTable.rows[medicinesTable.rows.length-1].cells[1].getElementsByTagName('input')[0].focus();
 
+}
+
+function saveMedicines() {
+  const medicines = [];
+  for (i = 1; i < medicinesTable.rows.length; i++) {
+    const row = medicinesTable.rows[i];
+    const id = parseFloat(row.cells[0].textContent);
+    const name = row.cells[1].getElementsByTagName('input')[0].value;
+    const dose = parseFloat(row.cells[2].getElementsByTagName('input')[0].value);
+    if (name === "" || isNaN(dose)) {
+      continue;
+    }
+    medicines.push({medicine_id: id, name: name, dose: dose});
+  }
+
+  console.log(medicines);
+  fetch('/api/v1/api/v1/medicines', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(medicines),
+  })
+  .then(response => response.json())
+  .then(data => {
+    populateMedicinesTable(data);
   }).catch(error => {
     console.error(error);
   });
@@ -124,45 +161,29 @@ function populateSettings() {
   });
 }
 
-function saveMedicines() {
-  // Iterate over the available medicines table and post them to the /api/v1/api/v1/medicines endpoint
-  const medicines = [];
-  const rows = medicinesTable.getElementsByTagName('tr');
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const name = row.getElementsByTagName('td')[0].textContent;
-    const dose = parseFloat(row.getElementsByTagName('td')[1].textContent);
-    medicines.push({ name, dose });
-  }
-  fetch('/api/v1/api/v1/medicines', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(medicines),
-  })
-  .catch((error) => {
-      console.error('Error:', error);
-    }
-  ).then(() => {
-    populateMedicinesTable();
-  });
-}
-
-function addMedicinesRow(table, name, dose) {
+function addMedicinesRow(table, id, name, dose) {
   const row = document.createElement('tr');
+  const idCell = document.createElement('td');
   const nameCell = document.createElement('td');
   const doseCell = document.createElement('td');
+  idCell.textContent = id;
 
-  nameCell.value = name;
-  nameCell.textContent = name;
-  doseCell.value = dose;
-  doseCell.textContent = dose;
+  const nameInput = document.createElement('input');
+  nameInput.onsubmit = saveMedicines;
+  nameInput.value = name;
+  nameCell.appendChild(nameInput);
 
+  const doseInput = document.createElement('input');
+  nameInput.onsubmit = saveMedicines;
+  doseInput.value = dose;
+  doseCell.appendChild(doseInput);
+
+  row.appendChild(idCell);
   row.appendChild(nameCell);
   row.appendChild(doseCell);
   table.appendChild(row);
 }
+
 
 
 function openDefaultTab() {

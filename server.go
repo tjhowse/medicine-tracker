@@ -275,9 +275,10 @@ func (s *Server) GetApiV1Medicines(ctx echo.Context) error {
 
 func (s *Server) SetMedicines(user userGUID, medicines []MedicineType) error {
 	for _, m := range medicines {
-		if err := s.db.AddMedicine(user,
+		if err := s.db.AddMedicine(
 			MedicineTypeDB{
 				MedicineType: m,
+				User:         user,
 			}); err != nil {
 			return err
 		}
@@ -295,10 +296,15 @@ func (s *Server) PostApiV1Medicines(ctx echo.Context) error {
 	if err := ctx.Bind(&medicines); err != nil {
 		return err
 	}
+	for _, m := range medicines {
+		log.Println("Got medicine: ", m)
+	}
 	if err := s.SetMedicines(user, medicines); err != nil {
+		log.Println("Failed to set medicines: ", err)
 		return err
 	}
-	return nil
+	return s.GetApiV1Medicines(ctx)
+	// return nil
 }
 
 func (s *Server) GetApiV1Logout(ctx echo.Context) error {

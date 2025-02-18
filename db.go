@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -74,22 +75,27 @@ func (f *MedicineLoggerDB) Close() error {
 }
 
 // Add/update a weight
-func (f *MedicineLoggerDB) AddMedicine(u userGUID, m MedicineTypeDB) error {
+func (f *MedicineLoggerDB) AddMedicine(m MedicineTypeDB) error {
 
 	// Check if the type already exists
 	var medicine MedicineTypeDB
+	log.Println("Checking for medicine: ", m.MedicineId)
 	// This weird Limit(1).Find(... business is because .First(), which ostensibly does the same thing,
 	// also outputs a "record not found" error to console, which is annoying.
-	if err := f.db.Limit(1).Find(&medicine, "user = ? AND name = ? AND dose = ?", u, m.Name, m.Dose).Error; err != nil {
+	if err := f.db.Limit(1).Find(&medicine, "user = ? AND medicine_id = ?", m.User, m.MedicineId).Error; err != nil {
 		// Doesn't exist, add it
-		m.User = u
+		log.Println("Adding new medicine: ", m)
 		if err := f.db.Create(&m).Error; err != nil {
 			return err
 		}
 	} else {
-		// Exists, error out
-		return errors.New("medicine already exists")
-
+		// Exists, update it
+		log.Println("Updating medicine: ", m)
+		medicine.MedicineType = m.MedicineType
+		medicine.User = m.User
+		if err := f.db.Save(&medicine).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 }

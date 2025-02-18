@@ -10,22 +10,24 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// MedicineID defines model for MedicineID.
+type MedicineID = float32
 
 // MedicineLogEntry defines model for MedicineLogEntry.
 type MedicineLogEntry struct {
-	Count      float32            `json:"count"`
-	MedicineId openapi_types.UUID `json:"medicine_id"`
-	Note       string             `json:"note"`
-	Time       time.Time          `json:"time"`
+	Count      float32    `json:"count"`
+	MedicineId MedicineID `json:"medicine_id"`
+	Note       string     `json:"note"`
+	Time       time.Time  `json:"time"`
 }
 
 // MedicineType defines model for MedicineType.
 type MedicineType struct {
-	Dose float32            `json:"dose"`
-	Id   openapi_types.UUID `json:"id"`
-	Name string             `json:"name"`
+	Dose       float32    `json:"dose"`
+	MedicineId MedicineID `json:"medicine_id"`
+	Name       string     `json:"name"`
 }
 
 // UserSettings defines model for UserSettings.

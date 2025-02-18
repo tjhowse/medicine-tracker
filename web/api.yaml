@@ -107,6 +107,8 @@ paths:
           description: OK
 components:
   schemas:
+    MedicineID:
+      type: number
     MedicineLogEntry:
       type: object
       required:
@@ -121,20 +123,20 @@ components:
         count:
           type: number
         medicine_id:
-          type: string
-          format: uuid
+          type: object
+          $ref: '#/components/schemas/MedicineID'
         note:
           type: string
     MedicineType:
       type: object
       required:
-        - id
+        - medicine_id
         - name
         - dose
       properties:
-        id:
-          type: string
-          format: uuid
+        medicine_id:
+          type: object
+          $ref: '#/components/schemas/MedicineID'
         name:
           type: string
         dose:
