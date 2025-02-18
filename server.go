@@ -238,13 +238,14 @@ func (s *Server) PostApiV1MedicineLog(ctx echo.Context) error {
 	if err := ctx.Bind(&logEntry); err != nil {
 		return err
 	}
+	log.Println("Got a request to log medicine: ", logEntry)
 	if logEntry.Time.IsZero() {
 		logEntry.Time = time.Now()
 	}
 	if err := s.db.AddMedicineLog(user, logEntry); err != nil {
-		return ctx.JSON(http.StatusOK, nil)
-	} else {
 		return echo.ErrBadRequest
+	} else {
+		return ctx.JSON(http.StatusOK, nil)
 	}
 }
 

@@ -112,6 +112,7 @@ func (f *MedicineLoggerDB) GetMedicines(u userGUID) ([]MedicineTypeDB, error) {
 
 // Add a medicine log entry
 func (f *MedicineLoggerDB) AddMedicineLog(u userGUID, m MedicineLogEntry) error {
+	log.Println("Adding medicine log entry: ", m)
 	return f.db.Create(&MedicineLogEntryDB{
 		User:             u,
 		MedicineLogEntry: m,
@@ -169,24 +170,29 @@ func GetDefaultUserSettingsJSON(name string) string {
 func GetDefaultMedicineTypes() []MedicineType {
 	return []MedicineType{
 		{
-			Name: "Paracetamol",
-			Dose: 500,
+			Name:       "Paracetamol",
+			Dose:       500,
+			MedicineId: 0,
 		},
 		{
-			Name: "Oxycodone",
-			Dose: 5,
+			Name:       "Oxycodone",
+			Dose:       5,
+			MedicineId: 1,
 		},
 		{
-			Name: "Tramadol",
-			Dose: 50,
+			Name:       "Tramadol",
+			Dose:       50,
+			MedicineId: 2,
 		},
 		{
-			Name: "Asprin",
-			Dose: 300,
+			Name:       "Asprin",
+			Dose:       300,
+			MedicineId: 3,
 		},
 		{
-			Name: "Pantoprazole",
-			Dose: 300,
+			Name:       "Pantoprazole",
+			Dose:       300,
+			MedicineId: 4,
 		},
 	}
 }

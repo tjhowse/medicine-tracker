@@ -1,8 +1,73 @@
+
 const medicineLog = document.getElementById('medicine-log-table');
 const medicineLogTable = document.createElement('table');
 const medicineLogHeaderRow = document.createElement('tr');
 medicineLogHeaderRow.innerHTML = '<th>Time</th><th>Count</th><th>Medicine</th><th>Note</th>';
-populateMedicineLogTab();
+medicineLogTable.appendChild(medicineLogHeaderRow);
+medicineLog.appendChild(medicineLogTable);
+populateMedicineLogTable();
+
+const medicineLogForm = document.getElementById('medicine-log-form');
+// Add a header to the form
+const medicineLogFormHeader = document.createElement('h2');
+medicineLogFormHeader.textContent = "Log Medicine";
+medicineLogForm.appendChild(medicineLogFormHeader);
+// Add a date input to the form that defaults to today
+const dateInput = document.createElement('input');
+dateInput.type = 'date';
+dateInput.value = new Date().toISOString().split('T')[0];
+medicineLogForm.appendChild(dateInput);
+// Add a time input to the form that defaults to now
+const timeInput = document.createElement('input');
+timeInput.type = 'time';
+timeInput.value = new Date().toTimeString().split(' ')[0];
+medicineLogForm.appendChild(timeInput);
+// Add a count input to the form
+const countInput = document.createElement('input');
+countInput.type = 'number';
+countInput.placeholder = 'Count';
+// Give the countInput the focus when the form is shown
+medicineLogForm.appendChild(countInput);
+// Add a medicine select to the form
+const medicineSelect = document.createElement('select');
+medicineSelect.id = 'medicine-select';
+medicineLogForm.appendChild(medicineSelect);
+populateMedicineDropdown(medicineSelect);
+
+// Add a note input to the form
+const noteInput = document.createElement('input');
+noteInput.type = 'text';
+noteInput.placeholder = 'Note';
+medicineLogForm.appendChild(noteInput);
+// Add a submit button to the form
+const submitButton = document.createElement('button');
+submitButton.textContent = 'Submit';
+submitButton.onclick = function() {
+  // Get the user's timezone offset as an ISO8601 TZ suffix
+  const date = new Date();
+  isoTZSuffix = date.toISOString().slice(19);
+  // The above doesn't work. Just hardcode the timezone offset:
+  isoTZSuffix = "+10:00";
+
+  const time = dateInput.value + 'T' + timeInput.value + isoTZSuffix;
+  const count = parseFloat(countInput.value);
+  const medicine_id = parseFloat(medicineSelect.value);
+  const note = noteInput.value;
+  fetch('/api/v1/api/v1/medicine-log', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({time: time, count: count, medicine_id: medicine_id, note: note}),
+  })
+  .then(response => response.json())
+  .then(data => {
+    populateMedicineLogTable();
+  }).catch(error => {
+    console.error(error);
+  });
+};
+medicineLogForm.appendChild(submitButton);
 
 const availableMedicines = document.getElementById('available-medicines');
 // Populate a table into this div
@@ -17,8 +82,46 @@ populateSettings();
 
 openDefaultTab();
 
-function populateMedicineLogTab() {
-  // Retrieve today's workout details and populate the Today's Workout section
+function populateMedicineDropdown(select) {
+  fetch('/api/v1/api/v1/medicines', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(response => response.json())
+  .then(data => {
+    data.forEach(detail => {
+      const option = document.createElement('option');
+      option.value = detail.medicine_id;
+      option.textContent = detail.dose +"mg "+detail.name;
+      select.appendChild(option);
+    });
+  }).catch(error => {
+    console.error(error);
+  });
+}
+
+function getMedicineIDtoNameMap() {
+  fetch('/api/v1/api/v1/medicines', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(response => response.json())
+  .then(data => {
+    const medicineIDtoNameMap = {};
+    data.forEach(detail => {
+      medicineIDtoNameMap[detail.medicine_id] = detail.name;
+    });
+    return medicineIDtoNameMap;
+  }).catch(error => {
+    console.error(error);
+  });
+}
+
+function populateMedicineLogTable() {
+  // Retrieve the medicine log and populate the table
+
 
   fetch('/api/v1/api/v1/medicine-log', {
     headers: {
@@ -26,13 +129,29 @@ function populateMedicineLogTab() {
     },
   })
   .then(response => response.json())
-  .then(data => {
+  .then(logData => {
     // Clear the table
     while (medicineLogTable.rows.length > 1) {
       medicineLogTable.deleteRow(1);
     }
-    data.forEach(detail => {
-      addMedicineLogRow(medicineLogTable, detail.time, detail.count, detail.medicine_id, detail.note);
+    // get the name map
+    fetch('/api/v1/api/v1/medicines', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      const medicineIDtoNameMap = {};
+      data.forEach(detail => {
+        medicineIDtoNameMap[detail.medicine_id] = detail.name;
+      });
+
+      logData.forEach(detail => {
+        addMedicineLogRow(medicineLogTable, detail.time, detail.count, medicineIDtoNameMap[detail.medicine_id], detail.note);
+      });
+    }).catch(error => {
+      console.error(error);
     });
 
   }).catch(error => {
@@ -194,13 +313,13 @@ function openDefaultTab() {
     const cookieName = cookiePart.split("=")[0];
     if (cookieName.trim() === "tab") {
       tabName = cookiePart.split("=")[1];
-      // Click the tab header
+
       document.getElementById("tab"+tabName).click();
       return;
     }
   }
   // If we didn't find a cookie, open the workout tab
-  document.getElementById("tabMedicineLog").click();
+  document.getElementById("MedicineLog").click();
 }
 
 function openTab(event, tabName) {
@@ -222,6 +341,13 @@ function openTab(event, tabName) {
   // Show the current tab, and add an "active" class to the button that opened the tab
   document.getElementById(tabName).style.display = "block";
   event.currentTarget.className += " active";
+
+  // Select a field on the tab based on the name. E.G. For the MedicineLog tab, focus the count input
+  if (tabName === "MedicineLog") {
+    countInput.focus();
+  } else if (tabName === "AvailableMedicines") {
+    medicinesTable.rows[medicinesTable.rows.length-1].cells[1].getElementsByTagName('input')[0].focus();
+  }
 
   // Set a cookie to remember which tab we had selected on load
   document.cookie = "tab=" + tabName;

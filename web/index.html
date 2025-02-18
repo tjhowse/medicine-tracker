@@ -10,23 +10,12 @@
       <h1>Medicine Logger</h1>
       <h2><div id="Greeting"></div></h2>
       <div class="tabs">
-        <button class="tablinks active" id="tabWorkout" onclick="openTab(event, 'MedicineLog')">Log</button>
+        <button class="tablinks active" id="tabMedicineLog" onclick="openTab(event, 'MedicineLog')">Log</button>
         <button class="tablinks" id="tabSettings" onclick="openTab(event, 'Settings')">Settings</button>
         <button class="tablinks" id="tabAbout" onclick="openTab(event, 'About')">About</button>
       </div>
       <div id="MedicineLog" class="tabcontent">
-        <div id="medicine-log-form">
-          <h2>Log Medicine</h2>
-          <label for="medicine">Medicine:</label>
-          <select id="medicine" name="medicine"></select><br><br>
-          <label for="dose">Dose:</label>
-          <input type="number" id="dose" name="dose"><br><br>
-          <label for="date">Date:</label>
-          <input type="date" id="date" name="date"><br><br>
-          <label for="time">Time:</label>
-          <input type="time" id="time" name="time"><br><br>
-          <input type="submit" value="Log" onclick="logMedicine()">
-        </div>
+        <div id="medicine-log-form"></div>
         <div id="medicine-log-table"></div>
       </div>
       <div id="Settings" class="tabcontent">
