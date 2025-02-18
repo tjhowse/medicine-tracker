@@ -1,0 +1,122 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* height: 100vh; */
+}
+
+/* Style the tab */
+.tabs {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+  width: 33.3%;
+}
+
+/* Style the buttons inside the tab */
+.tablinks {
+  background-color: #ddd;
+  color: black;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 17px;
+  width: 33.3%;
+}
+
+/* Change background color of buttons on hover */
+.tablinks:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tablinks.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 12px;
+  padding-top: 0; /* The header has its own padding */
+  border: 1px solid #ccc;
+  margin: 12px;
+  /* border-top: none; */
+}
+
+#workout-details {
+  margin-bottom: 20px;
+}
+
+#workout-results-form {
+  display: flex;
+  flex-direction: column;
+}
+
+#workout-results-form div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#workout-results-form label {
+  margin-right: 10px;
+}
+
+#workout-results-form input {
+  width: 50px;
+}
+
+#workout-results-form button {
+  margin-top: 10px;
+}
+
+/* Style the table */
+table {
+  border-collapse: collapse;
+  /* width: 100%; */
+  margin-bottom: 20px;
+  table-layout: fixed;
+}
+
+/* td, th {
+  white-space: nowrap;
+  border: 1px solid #ccc;
+} */
+
+/* Style the table header */
+th {
+  text-align: left;
+  background-color: #ddd;
+  padding: 8px;
+  white-space: nowrap;
+}
+
+/* Style the table rows */
+tr {
+  border-bottom: 1px solid #ddd;
+}
+
+/* Style the odd rows */
+tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+/* Style the table cells */
+td {
+  padding: 8px;
+  white-space: nowrap;
+}
+
+/* Style the first cell in each row */
+td:first-child {
+  font-weight: bold;
+}
+
+/* Style the last cell in each row */
+td:last-child {
+  text-align: right;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Medicine Logger</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Medicine Logger</h1>
+      <h2><div id="Greeting"></div></h2>
+      <div class="tabs">
+        <button class="tablinks active" id="tabWorkout" onclick="openTab(event, 'MedicineLog')">Log</button>
+        <button class="tablinks" id="tabSettings" onclick="openTab(event, 'Settings')">Settings</button>
+        <button class="tablinks" id="tabAbout" onclick="openTab(event, 'About')">About</button>
+      </div>
+      <div id="MedicineLog" class="tabcontent">
+        <div id="medicine-log-form">
+          <h2>Log Medicine</h2>
+          <label for="medicine">Medicine:</label>
+          <select id="medicine" name="medicine"></select><br><br>
+          <label for="dose">Dose:</label>
+          <input type="number" id="dose" name="dose"><br><br>
+          <label for="date">Date:</label>
+          <input type="date" id="date" name="date"><br><br>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time"><br><br>
+          <input type="submit" value="Log" onclick="logMedicine()">
+        </div>
+        <div id="medicine-log-table"></div>
+      </div>
+      <div id="Settings" class="tabcontent">
+        <h2>Available Medicines</h2>
+        <div id="available-medicines"></div>
+        <div id="add-medicine-form">
+          <h2>Add Medicine</h2>
+          <label for="new-medicine">Medicine:</label>
+          <input type="text" id="new-medicine" name="new-medicine"><br><br>
+          <label for="new-dose">Dose:</label>
+          <input type="number" id="new-dose" name="new-dose"><br><br>
+          <input type="submit" value="Add" onclick="addMedicine()">
+      </div>
+      <div id="About" class="tabcontent">
+        <h2>About</h2>
+        <p>Medicine Logger is a simple web app that helps you keep track of your medication.</p>
+        <p>
+          This website stores a cookie in your browser to remember your login, and that's it.
+          The person running the server can see your username, your stored settings, your medicine data and your hashed password.
+        </p>
+        <p>Source code is available on Github <a href="https://github.com/tjhowse/medicine-logger" target="_blank" rel="noopener noreferrer">here</a>.</p>
+        <p>Thanks! Happy medication!</p>
+        <button onclick="logout()">Logout</button><br>
+        <button onclick="deleteUser()">Delete user</button><br>
+        <button onclick="exportDataToCSV()">Download my workout data</button><br>
+      </div>
+      <script src="med_script.js"></script>
+    </div>
+  </body>
+</html>

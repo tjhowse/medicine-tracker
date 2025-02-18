@@ -1,0 +1,251 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+// This stores the medicine-logger database.
+type MedicineLoggerDB struct {
+	db *gorm.DB
+}
+
+type MedicineTypeDB struct {
+	gorm.Model
+	MedicineType
+	User userGUID
+}
+
+// This stores a record of all medicine loags.
+type MedicineLogEntryDB struct {
+	gorm.Model
+	MedicineLogEntry
+	User userGUID
+}
+
+type userGUID string
+
+type UsersDB struct {
+	gorm.Model
+	User         userGUID
+	Email        string
+	Password     string
+	Settings     string
+	OneTimeToken string
+}
+
+// Open the DB and migrate if required.
+func (f *MedicineLoggerDB) Init(filename string) error {
+	var err error
+	f.db, err = gorm.Open(sqlite.Open(filename), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
+	// Migrate the schema
+	f.db.AutoMigrate(&MedicineTypeDB{})
+	f.db.AutoMigrate(&MedicineLogEntryDB{})
+	f.db.AutoMigrate(&UsersDB{})
+
+	return nil
+}
+
+func NewMedicineLoggerDB(filename string) (*MedicineLoggerDB, error) {
+	fdb := &MedicineLoggerDB{}
+	if err := fdb.Init(filename); err != nil {
+		return fdb, err
+	}
+
+	return fdb, nil
+}
+
+// Close the DB.
+func (f *MedicineLoggerDB) Close() error {
+	sqlDB, err := f.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
+}
+
+// Add/update a weight
+func (f *MedicineLoggerDB) AddMedicine(u userGUID, m MedicineTypeDB) error {
+
+	// Check if the type already exists
+	var medicine MedicineTypeDB
+	// This weird Limit(1).Find(... business is because .First(), which ostensibly does the same thing,
+	// also outputs a "record not found" error to console, which is annoying.
+	if err := f.db.Limit(1).Find(&medicine, "user = ? AND name = ? AND dose = ?", u, m.Name, m.Dose).Error; err != nil {
+		// Doesn't exist, add it
+		m.User = u
+		if err := f.db.Create(&m).Error; err != nil {
+			return err
+		}
+	} else {
+		// Exists, error out
+		return errors.New("medicine already exists")
+
+	}
+	return nil
+}
+
+// Get all the available medicines
+func (f *MedicineLoggerDB) GetMedicines(u userGUID) ([]MedicineTypeDB, error) {
+
+	var medicines []MedicineTypeDB
+	if err := f.db.Find(&medicines, "user = ?", u).Error; err != nil {
+		return medicines, err
+	}
+	return medicines, nil
+}
+
+// Add a medicine log entry
+func (f *MedicineLoggerDB) AddMedicineLog(u userGUID, m MedicineLogEntry) error {
+	return f.db.Create(&MedicineLogEntryDB{
+		User:             u,
+		MedicineLogEntry: m,
+	}).Error
+}
+
+// Get all the medicine log entries
+func (f *MedicineLoggerDB) GetMedicineLog(u userGUID, start, end time.Time) ([]MedicineLogEntryDB, error) {
+	var logs []MedicineLogEntryDB
+	if err := f.db.Find(&logs, "user = ? AND time >= ? AND time <= ?", u, start, end).Error; err != nil {
+		return logs, err
+	}
+	return logs, nil
+}
+
+func (f *MedicineLoggerDB) GetSettings(u userGUID) (UserSettings, error) {
+	var user UsersDB
+	if err := f.db.Find(&user, "user = ?", u).Error; err != nil {
+		return UserSettings{}, err
+	}
+	var settings UserSettings
+	if err := json.Unmarshal([]byte(user.Settings), &settings); err != nil {
+		return UserSettings{}, err
+	}
+	return settings, nil
+}
+
+// Warning: This overwrites all settings. It should apply some intelligence to what
+// settings get overwritten.
+func (f *MedicineLoggerDB) UpdateSettings(u userGUID, settings UserSettings) error {
+	var user UsersDB
+	if err := f.db.Find(&user, "user = ?", u).Error; err != nil {
+		return err
+	}
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	user.Settings = string(settingsJSON)
+	return f.db.Save(&user).Error
+}
+
+func GetDefaultUserSettings(name string) UserSettings {
+	return UserSettings{
+		Name: name,
+	}
+}
+
+func GetDefaultUserSettingsJSON(name string) string {
+	s := GetDefaultUserSettings(name)
+	settingsJSON, _ := json.Marshal(s)
+	return string(settingsJSON)
+}
+
+func GetDefaultMedicineTypes() []MedicineType {
+	return []MedicineType{
+		{
+			Name: "Paracetamol",
+			Dose: 500,
+		},
+	}
+}
+
+// This adds a user to the database. It accepts their username and password,
+// and stores them securely in the database.
+func (f *MedicineLoggerDB) AddUser(username, email, password string) error {
+	// Check to see if the user already exists
+	if extant, _, _ := f.ValidateUser(username, password); extant {
+		return errors.New("user already exists")
+	}
+	// Hash the password
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	// Create a new user
+	user := UsersDB{
+		User:     userGUID(username),
+		Email:    email,
+		Password: string(hash),
+		Settings: GetDefaultUserSettingsJSON(username),
+	}
+	// Add default available weights
+	for _, medicine := range GetDefaultMedicineTypes() {
+		var db MedicineTypeDB
+		db.User = user.User
+		db.MedicineType = medicine
+		if err := f.db.Save(&db).Error; err != nil {
+			return err
+		}
+	}
+	// Add the user to the database
+	return f.db.Save(&user).Error
+}
+
+// TODO this should probably return a user object
+func (f *MedicineLoggerDB) ValidateUser(username string, password string) (userExists, pwValid bool, err error) {
+	var user UsersDB
+	if err := f.db.Find(&user, "user = ?", userGUID(username)).Error; err != nil {
+		return false, false, err
+	}
+	if user.User == "" {
+		return false, false, nil
+	}
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
+		return true, true, nil
+	}
+	return true, false, nil
+}
+
+// This deletes a user from all tables
+func (f *MedicineLoggerDB) DeleteUser(username userGUID) error {
+	var user UsersDB
+	if err := f.db.Find(&user, "user = ?", username).Error; err != nil {
+		return err
+	}
+	if err := f.db.Unscoped().Delete(&user).Error; err != nil {
+		return err
+	}
+	var logEntries []MedicineLogEntryDB
+	if err := f.db.Find(&logEntries, "user = ?", username).Error; err != nil {
+		return err
+	}
+	if err := f.db.Unscoped().Delete(&logEntries).Error; err != nil {
+		return err
+	}
+	var medicines []MedicineTypeDB
+	if err := f.db.Find(&medicines, "user = ?", username).Error; err != nil {
+		return err
+	}
+	if err := f.db.Unscoped().Delete(&medicines).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *MedicineLoggerDB) ValidateOneTimeToken(token string) (userGUID, error) {
+	var user UsersDB
+	if err := f.db.Find(&user, "onetimetoken = ?", token).Error; err != nil {
+		return "", err
+	}
+	return user.User, nil
+}

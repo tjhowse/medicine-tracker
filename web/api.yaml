@@ -1,0 +1,148 @@
+openapi: 3.0.0
+info:
+  title: Medicine Logger API
+  version: 0.0.1
+paths:
+  /api/v1/medicine-log:
+    get:
+      description: Retrieve the medicine log
+      parameters:
+        - in: query
+          name: start
+          description: Get entries after this point in time
+          schema:
+            type: string
+            format: date-time
+          required: false
+        - in: query
+          name: end
+          description: Get entries before this point in time
+          schema:
+            type: string
+            format: date-time
+          required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicineLogEntry'
+    post:
+      description: Submit to the medicine log
+      requestBody:
+        description: Medicine log to enter
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MedicineLogEntry'
+      responses:
+        '204':
+          description: No Content
+  /api/v1/medicines:
+    get:
+      description: Retrieve available medicines
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicineType'
+                minItems: 1
+    post:
+      description: Update available medicines
+      requestBody:
+        description: Available medicines to update
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MedicineType'
+              minItems: 1
+      responses:
+        '204':
+          description: No Content
+  /api/v1/logout:
+    get:
+      description: Logs the user out
+      responses:
+        '200':
+          description: OK
+  /api/v1/settings:
+    get:
+      description: Retrieve user's settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/UserSettings'
+    post:
+      description: Update user's settings
+      requestBody:
+        description: Available weights to update
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/UserSettings'
+      responses:
+        '204':
+          description: No Content
+  /api/v1/delete-user:
+    get:
+      description: Deletes the user
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    MedicineLogEntry:
+      type: object
+      required:
+        - time
+        - count
+        - medicine_id
+        - note
+      properties:
+        time:
+          type: string
+          format: date-time
+        count:
+          type: number
+        medicine_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+    MedicineType:
+      type: object
+      required:
+        - id
+        - name
+        - dose
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        dose:
+          type: number
+    UserSettings:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
