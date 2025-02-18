@@ -12,16 +12,13 @@ const medicineLogForm = document.getElementById('medicine-log-form');
 const medicineLogFormHeader = document.createElement('h2');
 medicineLogFormHeader.textContent = "Log Medicine";
 medicineLogForm.appendChild(medicineLogFormHeader);
-// Add a date input to the form that defaults to today
-const dateInput = document.createElement('input');
-dateInput.type = 'date';
-dateInput.value = new Date().toISOString().split('T')[0];
-medicineLogForm.appendChild(dateInput);
-// Add a time input to the form that defaults to now
-const timeInput = document.createElement('input');
-timeInput.type = 'time';
-timeInput.value = new Date().toTimeString().split(' ')[0];
-medicineLogForm.appendChild(timeInput);
+const datetimeInput = document.createElement('input');
+datetimeInput.type = 'datetime-local';
+const now = new Date();
+const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+const localISOTime = new Date(now - tzOffset).toISOString().slice(0, 16);
+datetimeInput.value = localISOTime;
+medicineLogForm.appendChild(datetimeInput);
 // Add a count input to the form
 const countInput = document.createElement('input');
 countInput.type = 'number';
@@ -40,19 +37,18 @@ noteInput.type = 'text';
 noteInput.placeholder = 'Note';
 medicineLogForm.appendChild(noteInput);
 // Add a submit button to the form
-const submitButton = document.createElement('button');
+submitButton = document.createElement('button');
 submitButton.textContent = 'Submit';
 submitButton.onclick = function() {
-  // Get the user's timezone offset as an ISO8601 TZ suffix
-  const date = new Date();
-  isoTZSuffix = date.toISOString().slice(19);
-  // The above doesn't work. Just hardcode the timezone offset:
-  isoTZSuffix = "+10:00";
+  // Just hardcode the timezone offset:
+  // isoTZSuffix = "+10:00";
 
-  const time = dateInput.value + 'T' + timeInput.value + isoTZSuffix;
+  // const time = datetimeInput.value + isoTZSuffix;
+  const time = datetimeInput.value+":00+10:00";
   const count = parseFloat(countInput.value);
   const medicine_id = parseFloat(medicineSelect.value);
   const note = noteInput.value;
+
   fetch('/api/v1/api/v1/medicine-log', {
     method: 'POST',
     headers: {
@@ -63,11 +59,20 @@ submitButton.onclick = function() {
   .then(response => response.json())
   .then(data => {
     populateMedicineLogTable();
+    countInput.value = "";
+    medicineSelect.value = -1;
+    noteInput.value = "";
+    // Put focus on the value field
+    countInput.focus();
   }).catch(error => {
     console.error(error);
+    window.location.href = "/login.html";
   });
 };
 medicineLogForm.appendChild(submitButton);
+medicineLogForm.onsubmit = function(event) {
+  event.preventDefault();
+};
 
 const availableMedicines = document.getElementById('available-medicines');
 // Populate a table into this div
@@ -83,6 +88,10 @@ populateSettings();
 openDefaultTab();
 
 function populateMedicineDropdown(select) {
+  const option = document.createElement('option');
+  option.value = -1;
+  option.textContent = "N/A";
+  select.appendChild(option);
   fetch('/api/v1/api/v1/medicines', {
     headers: {
       'Content-Type': 'application/json',
@@ -93,31 +102,15 @@ function populateMedicineDropdown(select) {
     data.forEach(detail => {
       const option = document.createElement('option');
       option.value = detail.medicine_id;
-      option.textContent = detail.dose +"mg "+detail.name;
+      option.textContent = detail.name+" "+detail.dose +"mg";
       select.appendChild(option);
     });
   }).catch(error => {
     console.error(error);
+    window.location.href = "/login.html";
   });
 }
 
-function getMedicineIDtoNameMap() {
-  fetch('/api/v1/api/v1/medicines', {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-  .then(response => response.json())
-  .then(data => {
-    const medicineIDtoNameMap = {};
-    data.forEach(detail => {
-      medicineIDtoNameMap[detail.medicine_id] = detail.name;
-    });
-    return medicineIDtoNameMap;
-  }).catch(error => {
-    console.error(error);
-  });
-}
 
 function populateMedicineLogTable() {
   // Retrieve the medicine log and populate the table
