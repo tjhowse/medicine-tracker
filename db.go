@@ -172,6 +172,22 @@ func GetDefaultMedicineTypes() []MedicineType {
 			Name: "Paracetamol",
 			Dose: 500,
 		},
+		{
+			Name: "Oxycodone",
+			Dose: 5,
+		},
+		{
+			Name: "Tramadol",
+			Dose: 50,
+		},
+		{
+			Name: "Asprin",
+			Dose: 300,
+		},
+		{
+			Name: "Pantoprazole",
+			Dose: 300,
+		},
 	}
 }
 
