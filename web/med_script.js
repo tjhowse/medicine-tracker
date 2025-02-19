@@ -2,7 +2,7 @@
 const medicineLog = document.getElementById('medicine-log-table');
 const medicineLogTable = document.createElement('table');
 const medicineLogHeaderRow = document.createElement('tr');
-medicineLogHeaderRow.innerHTML = '<th>Time</th><th>Count</th><th>Medicine</th><th>Note</th>';
+medicineLogHeaderRow.innerHTML = '<th>Time</th><th>Count</th><th>Medicine</th><th>Note</th><th>Delete</th>';
 medicineLogTable.appendChild(medicineLogHeaderRow);
 medicineLog.appendChild(medicineLogTable);
 populateMedicineLogTable();
