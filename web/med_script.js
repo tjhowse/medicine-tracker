@@ -19,9 +19,22 @@ const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
 const localISOTime = new Date(now - tzOffset).toISOString().slice(0, 16);
 datetimeInput.value = localISOTime;
 medicineLogForm.appendChild(datetimeInput);
+// Add a row of buttons with 0.5, 1 an 2 on them that will set the count input
+const countButtons = document.createElement('div');
+countButtons.id = 'count-buttons';
+const counts = [0.5, 1, 2];
+counts.forEach(count => {
+  const button = document.createElement('button');
+  button.textContent = count;
+  button.onclick = function() {
+    countInput.value = count;
+  };
+  countButtons.appendChild(button);
+});
+medicineLogForm.appendChild(countButtons);
 // Add a count input to the form
 const countInput = document.createElement('input');
-countInput.type = 'number';
+countInput.type = 'float';
 countInput.placeholder = 'Count';
 // Give the countInput the focus when the form is shown
 medicineLogForm.appendChild(countInput);
@@ -141,7 +154,8 @@ function populateMedicineLogTable() {
       });
 
       logData.forEach(detail => {
-        addMedicineLogRow(medicineLogTable, detail.time, detail.count, medicineIDtoNameMap[detail.medicine_id], detail.note);
+        console.log(detail);
+        addMedicineLogRow(medicineLogTable, detail.log_id, detail.time, detail.count, medicineIDtoNameMap[detail.medicine_id], detail.note);
       });
     }).catch(error => {
       console.error(error);
@@ -153,22 +167,43 @@ function populateMedicineLogTable() {
   });
 }
 
-function addMedicineLogRow(table, time, count, medicine_id, note) {
+function addMedicineLogRow(table, id, time, count, medicine_id, note) {
   const row = document.createElement('tr');
   const timeCell = document.createElement('td');
   const countCell = document.createElement('td');
   const medicineCell = document.createElement('td');
   const noteCell = document.createElement('td');
+  const deleteButtonCell = document.createElement('td');
 
-  timeCell.textContent = time;
+  const formattedTime = time.slice(0, 16).replace('T', ' ');
+  timeCell.textContent = formattedTime;
   countCell.textContent = count;
   medicineCell.textContent = medicine_id;
   noteCell.textContent = note;
+  deleteButton = document.createElement('button');
+  deleteButton.textContent = "Delete";
+  deleteButton.onclick = function() {
+    fetch(`/api/v1/api/v1/medicine-log?log_id=${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+        })
+        .then(response => response.json())
+        .then(data => {
+      populateMedicineLogTable();
+        }).catch(error => {
+      console.error(error);
+      window.location.href = "/login.html";
+        });
+  };
+  deleteButtonCell.appendChild(deleteButton);
 
   row.appendChild(timeCell);
   row.appendChild(countCell);
   row.appendChild(medicineCell);
   row.appendChild(noteCell);
+  row.appendChild(deleteButtonCell);
   table.appendChild(row);
 }
 

@@ -12,12 +12,16 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// LogID defines model for LogID.
+type LogID = int
+
 // MedicineID defines model for MedicineID.
-type MedicineID = float32
+type MedicineID = int
 
 // MedicineLogEntry defines model for MedicineLogEntry.
 type MedicineLogEntry struct {
 	Count      float32    `json:"count"`
+	LogId      LogID      `json:"log_id"`
 	MedicineId MedicineID `json:"medicine_id"`
 	Note       string     `json:"note"`
 	Time       time.Time  `json:"time"`
@@ -33,6 +37,12 @@ type MedicineType struct {
 // UserSettings defines model for UserSettings.
 type UserSettings struct {
 	Name string `json:"name"`
+}
+
+// DeleteApiV1MedicineLogParams defines parameters for DeleteApiV1MedicineLog.
+type DeleteApiV1MedicineLogParams struct {
+	// LogId Delete entry with this log ID
+	LogId LogID `form:"log_id" json:"log_id"`
 }
 
 // GetApiV1MedicineLogParams defines parameters for GetApiV1MedicineLog.
@@ -67,6 +77,9 @@ type ServerInterface interface {
 
 	// (GET /api/v1/logout)
 	GetApiV1Logout(ctx echo.Context) error
+
+	// (DELETE /api/v1/medicine-log)
+	DeleteApiV1MedicineLog(ctx echo.Context, params DeleteApiV1MedicineLogParams) error
 
 	// (GET /api/v1/medicine-log)
 	GetApiV1MedicineLog(ctx echo.Context, params GetApiV1MedicineLogParams) error
@@ -107,6 +120,24 @@ func (w *ServerInterfaceWrapper) GetApiV1Logout(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetApiV1Logout(ctx)
+	return err
+}
+
+// DeleteApiV1MedicineLog converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteApiV1MedicineLog(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteApiV1MedicineLogParams
+	// ------------- Required query parameter "log_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "log_id", ctx.QueryParams(), &params.LogId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter log_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteApiV1MedicineLog(ctx, params)
 	return err
 }
 
@@ -210,6 +241,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/api/v1/delete-user", wrapper.GetApiV1DeleteUser)
 	router.GET(baseURL+"/api/v1/logout", wrapper.GetApiV1Logout)
+	router.DELETE(baseURL+"/api/v1/medicine-log", wrapper.DeleteApiV1MedicineLog)
 	router.GET(baseURL+"/api/v1/medicine-log", wrapper.GetApiV1MedicineLog)
 	router.POST(baseURL+"/api/v1/medicine-log", wrapper.PostApiV1MedicineLog)
 	router.GET(baseURL+"/api/v1/medicines", wrapper.GetApiV1Medicines)

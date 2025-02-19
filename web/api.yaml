@@ -43,6 +43,19 @@ paths:
       responses:
         '204':
           description: No Content
+    delete:
+      description: Delete entries from the medicine log
+      parameters:
+        - in: query
+          name: log_id
+          description: Delete entry with this log ID
+          schema:
+            type: object
+            $ref: '#/components/schemas/LogID'
+          required: true
+      responses:
+        '204':
+          description: No Content
   /api/v1/medicines:
     get:
       description: Retrieve available medicines
@@ -108,13 +121,16 @@ paths:
 components:
   schemas:
     MedicineID:
-      type: number
+      type: integer
+    LogID:
+      type: integer
     MedicineLogEntry:
       type: object
       required:
         - time
         - count
         - medicine_id
+        - log_id
         - note
       properties:
         time:
@@ -125,6 +141,9 @@ components:
         medicine_id:
           type: object
           $ref: '#/components/schemas/MedicineID'
+        log_id:
+          type: object
+          $ref: '#/components/schemas/LogID'
         note:
           type: string
     MedicineType:

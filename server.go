@@ -203,7 +203,7 @@ func (s *Server) GetApiV1MedicineLog(ctx echo.Context, params GetApiV1MedicineLo
 		return err
 	}
 	var start, end time.Time
-	log.Println("Got a request for the medicine log")
+	log.Println("Got a request for the medicine log for user", user)
 	if params.Start == nil {
 		// No start time specified, use a point in the distant past
 		start = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -244,6 +244,20 @@ func (s *Server) PostApiV1MedicineLog(ctx echo.Context) error {
 	}
 	if err := s.db.AddMedicineLog(user, logEntry); err != nil {
 		return echo.ErrBadRequest
+	} else {
+		return ctx.JSON(http.StatusOK, nil)
+	}
+}
+
+func (s *Server) DeleteApiV1MedicineLog(ctx echo.Context, params DeleteApiV1MedicineLogParams) error {
+	var user userGUID
+	var err error
+	if user, err = s.GetOrCreateUserGUIDCookie(ctx); err != nil {
+		return err
+	}
+	log.Println("Got a request to delete medicine log entry: ", params.LogId)
+	if err := s.db.DeleteMedicineLog(user, uint(params.LogId)); err != nil {
+		return err
 	} else {
 		return ctx.JSON(http.StatusOK, nil)
 	}

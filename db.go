@@ -120,12 +120,24 @@ func (f *MedicineLoggerDB) AddMedicineLog(u userGUID, m MedicineLogEntry) error 
 }
 
 // Get all the medicine log entries
-func (f *MedicineLoggerDB) GetMedicineLog(u userGUID, start, end time.Time) ([]MedicineLogEntryDB, error) {
-	var logs []MedicineLogEntryDB
-	if err := f.db.Find(&logs, "user = ? AND time >= ? AND time <= ?", u, start, end).Error; err != nil {
+func (f *MedicineLoggerDB) GetMedicineLog(u userGUID, start, end time.Time) ([]MedicineLogEntry, error) {
+	var logDBs []MedicineLogEntryDB
+	var logs []MedicineLogEntry
+	log.Println("Getting log entries for ", u, " between ", start, " and ", end)
+	if err := f.db.Find(&logDBs, "user = ? AND time >= ? AND time <= ?", u, start, end).Error; err != nil {
 		return logs, err
 	}
+	// Copy the internal DB ID into the external Log id
+	log.Println("Got ", len(logDBs), " log entries")
+	for i, l := range logDBs {
+		logDBs[i].LogId = LogID(l.ID)
+		logs = append(logs, logDBs[i].MedicineLogEntry)
+	}
+	log.Println("Returning ", len(logs), " log entries")
 	return logs, nil
+}
+func (f *MedicineLoggerDB) DeleteMedicineLog(u userGUID, id uint) error {
+	return f.db.Delete(&MedicineLogEntryDB{}, id).Error
 }
 
 func (f *MedicineLoggerDB) GetSettings(u userGUID) (UserSettings, error) {
