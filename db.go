@@ -206,6 +206,11 @@ func GetDefaultMedicineTypes() []MedicineType {
 			Dose:       300,
 			MedicineId: 4,
 		},
+		{
+			Name:       "Meloxicam",
+			Dose:       15,
+			MedicineId: 5,
+		},
 	}
 }
 
